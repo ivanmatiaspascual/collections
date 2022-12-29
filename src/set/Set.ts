@@ -76,6 +76,14 @@ class Set<T extends Comparable> {
 		return this;
 	}
 
+	public forEachReverse(callback: (comparable: T, i: number, set: Set<T>) => void, thisArg?: any): Set<T> {
+		this.array.forEach((comparable, i, array) => {
+			const j = array.length - i - 1;
+			callback(array[j], j, this);
+		});
+		return this;
+	}
+
 	/**
 	 * Similar al find que tiene Array pero con busqueda binaria
 	 * @param compareTo
