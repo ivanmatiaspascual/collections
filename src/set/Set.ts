@@ -89,7 +89,7 @@ class Set<T extends Comparable> {
 	 * @param compareTo
 	 * @returns 
 	 */
-	public find(compareTo: (datum: T) => number): T {
+	public find(compareTo: Comparable["compareTo"]): T {
 		return this.array[this.indexOf(<T>{ compareTo: compareTo })];
 	}
 
@@ -236,11 +236,16 @@ class Set<T extends Comparable> {
 	}
 
 	/**
-	 * @param {T} comparable
+	 * @param {T | Comparable["compareTo"]} param Objeto o una funcion compareTo
 	 * @return {number} indice donde se encontraba insertado o -1 si no pudo removerlo porque no se encontraba insertado
 	 */
-	public remove(comparable: T) {
-		const index = this.indexOf(comparable);
+	public remove(param: T | Comparable["compareTo"]) {
+		let index;
+		if (typeof param === "object") {
+			index = this.indexOf(param);
+		} else { // "function"
+			index = this.indexOf(<T>{ compareTo: param });
+		}
 		if (index > -1) {
 			this.array.splice(index, 1);
 		}
