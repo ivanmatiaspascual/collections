@@ -69,7 +69,7 @@ class Set<T extends Comparable> {
 		}
 	}
 
-	public forEach(callback: (comparable: T, i: number, set: Set<T>) => Set<T>) {
+	public forEach(callback: (comparable: T, i: number, set: Set<T>) => void, thisArg?: any): Set<T> {
 		this.array.forEach((comparable, i, array) => {
 			callback(comparable, i, this);
 		});
@@ -99,7 +99,7 @@ class Set<T extends Comparable> {
 		return this.array[index];
 	}
 
-	public map(callback: (comparable: T, i: number, set: Set<T>) => Set<T>) {
+	public map(callback: (comparable: T, i: number, set: Set<T>) => T, thisArg?: any): Set<T> {
 		const set = new Set<T>();
 		set.array = this.array.map((comparable, i, array) => {
 			return callback(comparable, i, this);
