@@ -53,7 +53,7 @@ class Set<T extends Comparable> {
 	 * @param {number} [end = this.array.length]
 	 * @return {number}
 	 */
-	private indexOf(comparable: T, start = 0, end = this.array.length): number {
+	public indexOf(comparable: T, start = 0, end = this.array.length): number {
 		const pivot = parseInt((start + (end - start) / 2).toString(), 10);
 		if (end - start <= 0) {
 			return -1;
@@ -82,15 +82,6 @@ class Set<T extends Comparable> {
 			callback(array[j], j, this);
 		});
 		return this;
-	}
-
-	/**
-	 * Similar al find que tiene Array pero con busqueda binaria
-	 * @param compareTo
-	 * @returns 
-	 */
-	public find(compareTo: Comparable["compareTo"]): T {
-		return this.array[this.indexOf(<T>{ compareTo: compareTo })];
 	}
 
 	public reduce(callback: (initialValue: any, comparable: T, i: number, set: Set<T>) => any, initialValue: any) {
