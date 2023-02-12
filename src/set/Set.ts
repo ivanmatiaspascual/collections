@@ -56,7 +56,7 @@ class Set<T extends Comparable> {
 	public indexOf(comparable: T, start = 0, end = this.array.length): number {
 		const pivot = parseInt((start + (end - start) / 2).toString(), 10);
 		if (end - start <= 0) {
-			return -1;
+			return -1; // No encontrado
 		} else {
 			const comparator = comparable.compareTo(this.array[pivot]);
 			if (comparator === 0) {
@@ -130,11 +130,34 @@ class Set<T extends Comparable> {
 	 * @return {number} indice donde fue insertado o -1 si el recibido por parametro es un duplicado el cual ignora
 	 */
 	public add(comparable: T, start = 0, end = this.array.length) {
-		const index = this.indexFor(comparable);
+		const index = this.indexFor(comparable, start, end);
 		if (index > -1) {
 			this.array.splice(index, 0, comparable);
 		}
 		return index;
+	}
+
+	/**
+	 * En caso de existir lo reemplaza y en caso de no existir lo adhiere.
+	 * Devuelve el indice en el que se va a encontrar al elemento nuevo.
+	 * @return {number} indice donde fue insertado o reemplazado
+	 */
+	public put(comparable: T, start = 0, end = this.array.length): number {
+		const pivot = parseInt((start + (end - start) / 2).toString(), 10);
+		if (end - start <= 0) {
+			this.array.splice(pivot, 0, comparable); // Add
+			return pivot;
+		} else {
+			const comparator = comparable.compareTo(this.array[pivot]);
+			if (comparator === 0) {
+				this.array.splice(pivot, 1, comparable); // Replace
+				return pivot;
+			} else if (comparator < 0) {
+				return this.put(comparable, start, pivot);
+			} else {
+				return this.put(comparable, pivot + 1, end);
+			}
+		}
 	}
 
 	/**
