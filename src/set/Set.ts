@@ -28,7 +28,7 @@ class Set<T extends Comparable> {
 	 * @param {number} [end = this.array.length]
 	 * @return {number}
 	 */
-	private indexFor(comparable: T, start = 0, end = this.array.length): number {
+	public indexFor(comparable: T, start = 0, end = this.array.length): number {
 		const pivot = parseInt((start + (end - start) / 2).toString(), 10);
 		if (end - start <= 0) {
 			return pivot;
