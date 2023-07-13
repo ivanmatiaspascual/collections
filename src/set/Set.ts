@@ -8,9 +8,9 @@ import Comparable from "./interfaces/Comparable";
  * @memberof helper.collection
  */
 class Set<T extends Comparable> {
-	
+
 	private array: any[];
-	
+
 	/**
 	 * @param {...helper.collection.Comparable} args Los mismos argumentos que soporta la clase built-in nativa Array
 	 */
@@ -106,9 +106,15 @@ class Set<T extends Comparable> {
 		return set;
 	}
 
-	public slice(begin: number, end: number) {
+	public slice(start: number, end: number) {
 		const set = new Set<T>();
-		set.array = this.array.slice(begin, end);
+		set.array = this.array.slice(start, end);
+		return set;
+	}
+
+	public splice(start: number, deleteCount = 0, ...items: T[]) {
+		const set = new Set<T>();
+		set.array = this.array.splice(start, deleteCount, items);
 		return set;
 	}
 
@@ -119,7 +125,7 @@ class Set<T extends Comparable> {
 
 	/**
 	 * Devuelve una copia
-	 * @returns 
+	 * @returns
 	 */
 	public toArray(): T[] {
 		return this.array.slice(0); // copy
