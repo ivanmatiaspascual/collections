@@ -98,11 +98,9 @@ class Set<T extends Comparable> {
 		return this.array[index];
 	}
 
-	public map(callback: (comparable: T, i: number, set: Set<T>) => T, thisArg?: any): Set<T> {
-		const set = new Set<T>();
-		set.array = this.array.map((comparable, i, array) => {
-			return callback(comparable, i, this);
-		});
+	public map<U extends Comparable>(callback: (comparable: T, i: number, set: Set<T>) => U): Set<U> {
+		const set = new Set<U>();
+		set.array = this.array.map<U>((comparable, i, array) => callback(comparable, i, this));
 		return set;
 	}
 
@@ -115,6 +113,12 @@ class Set<T extends Comparable> {
 	public splice(start: number, deleteCount = 0, ...items: T[]) {
 		const set = new Set<T>();
 		set.array = this.array.splice(start, deleteCount, items);
+		return set;
+	}
+
+	public filter(callback: (value: T, index: number, set: Set<T>) => boolean) {
+		const set = new Set<T>();
+		set.array = this.array.filter((comparable, i, array) => callback(comparable, i, this));
 		return set;
 	}
 
