@@ -9,6 +9,7 @@ import Comparable from "./interfaces/Comparable";
  */
 class Set<T extends Comparable> {
 
+	private reverser = 1; // 1 o -1
 	private array: any[];
 
 	/**
@@ -17,6 +18,10 @@ class Set<T extends Comparable> {
 	constructor(...args: any[]) {
 		this.array = [];
 		this.array.push(...args);
+	}
+
+	private compare(comparable: T, otherComparable: T) {
+		return comparable.compareTo(otherComparable) * this.reverser;
 	}
 
 	/**
@@ -33,7 +38,7 @@ class Set<T extends Comparable> {
 		if (end - start <= 0) {
 			return pivot;
 		}
-		const comparator = comparable.compareTo(this.array[pivot]);
+		const comparator = this.compare(comparable, this.array[pivot]);
 		if (comparator === 0) {
 			return -1; // duplicado
 		} else if (comparator < 0) {
@@ -57,7 +62,7 @@ class Set<T extends Comparable> {
 		if (end - start <= 0) {
 			return -1; // No encontrado
 		}
-		const comparator = comparable.compareTo(this.array[pivot]);
+		const comparator = this.compare(comparable, this.array[pivot]);
 		if (comparator === 0) {
 			return pivot;
 		} else if (comparator < 0) {
@@ -160,7 +165,7 @@ class Set<T extends Comparable> {
 			this.array.splice(pivot, 0, comparable); // Add
 			return pivot;
 		}
-		const comparator = comparable.compareTo(this.array[pivot]);
+		const comparator = this.compare(comparable, this.array[pivot]);
 		if (comparator === 0) {
 			if (!condition || condition(comparable, pivot)) {
 				this.array.splice(pivot, 1, comparable); // Replace
@@ -201,11 +206,11 @@ class Set<T extends Comparable> {
 			const requestedFirst = comparables[0];
 			const requestedLast = comparables[comparables.length - 1];
 
-			const requestedLastCompareToExistingFirst = requestedLast.compareTo(existingFirst);
+			const requestedLastCompareToExistingFirst = this.compare(requestedLast, existingFirst);
 			if (requestedLastCompareToExistingFirst < 0) { // si estan las dos por debajo de la mas vieja de las coordenadas
 				index = 0; // al principio
 			} else {
-				const requestedFirstCompareToexistingLast = requestedFirst.compareTo(existingLast);
+				const requestedFirstCompareToexistingLast = this.compare(requestedFirst, existingLast);
 				if (requestedFirstCompareToexistingLast > 0) {
 					index = this.array.length; // al final
 				} else {
@@ -280,6 +285,13 @@ class Set<T extends Comparable> {
 		}
 		return index;
 	}
+
+	public reverse() {
+		this.array.reverse();
+		this.reverser = this.reverser * (-1);
+		return this;
+	}
+
 }
 
 export default Set;
