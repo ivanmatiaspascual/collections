@@ -115,7 +115,7 @@ class Set<T extends Comparable> {
 
 	public splice(start: number, deleteCount = 0, ...items: T[]) {
 		const set = new Set<T>();
-		set.array = this.array.splice(start, deleteCount, items);
+		set.array = this.array.splice(start, deleteCount, ...items);
 		return set;
 	}
 
