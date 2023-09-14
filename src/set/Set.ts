@@ -167,7 +167,7 @@ class Set<T extends Comparable> {
 		}
 		const comparator = this.compare(comparable, this.array[pivot]);
 		if (comparator === 0) {
-			if (!condition || condition(comparable, pivot)) {
+			if (!condition || condition(this.array[pivot], pivot)) {
 				this.array.splice(pivot, 1, comparable); // Replace
 				return pivot;
 			} else {
