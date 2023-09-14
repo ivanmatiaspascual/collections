@@ -174,9 +174,9 @@ class Set<T extends Comparable> {
 				return -1;
 			}
 		} else if (comparator < 0) {
-			return this.put(comparable, start, pivot);
+			return this.put(comparable, start, pivot, condition);
 		} else {
-			return this.put(comparable, pivot + 1, end);
+			return this.put(comparable, pivot + 1, end, condition);
 		}
 	}
 
