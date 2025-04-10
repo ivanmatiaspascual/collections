@@ -8,15 +8,20 @@ import Comparable from "./interfaces/Comparable";
  * @memberof helper.collection
  */
 class Set<T extends Comparable> {
-	
+
+	private reverser = 1; // 1 o -1
 	private array: any[];
-	
+
 	/**
 	 * @param {...helper.collection.Comparable} args Los mismos argumentos que soporta la clase built-in nativa Array
 	 */
 	constructor(...args: any[]) {
 		this.array = [];
 		this.array.push(...args);
+	}
+
+	private compare(comparable: T, otherComparable: T) {
+		return comparable.compareTo(otherComparable) * this.reverser;
 	}
 
 	/**
@@ -28,19 +33,18 @@ class Set<T extends Comparable> {
 	 * @param {number} [end = this.array.length]
 	 * @return {number}
 	 */
-	private indexFor(comparable: T, start = 0, end = this.array.length): number {
+	public indexFor(comparable: T, start = 0, end = this.array.length): number {
 		const pivot = parseInt((start + (end - start) / 2).toString(), 10);
 		if (end - start <= 0) {
 			return pivot;
+		}
+		const comparator = this.compare(comparable, this.array[pivot]);
+		if (comparator === 0) {
+			return -1; // duplicado
+		} else if (comparator < 0) {
+			return this.indexFor(comparable, start, pivot);
 		} else {
-			const comparator = comparable.compareTo(this.array[pivot]);
-			if (comparator === 0) {
-				return -1; // duplicado
-			} else if (comparator < 0) {
-				return this.indexFor(comparable, start, pivot);
-			} else {
-				return this.indexFor(comparable, pivot + 1, end);
-			}
+			return this.indexFor(comparable, pivot + 1, end);
 		}
 	}
 
@@ -53,19 +57,18 @@ class Set<T extends Comparable> {
 	 * @param {number} [end = this.array.length]
 	 * @return {number}
 	 */
-	private indexOf(comparable: T, start = 0, end = this.array.length): number {
+	public indexOf(comparable: T, start = 0, end = this.array.length): number {
 		const pivot = parseInt((start + (end - start) / 2).toString(), 10);
 		if (end - start <= 0) {
-			return -1;
+			return -1; // No encontrado
+		}
+		const comparator = this.compare(comparable, this.array[pivot]);
+		if (comparator === 0) {
+			return pivot;
+		} else if (comparator < 0) {
+			return this.indexOf(comparable, start, pivot);
 		} else {
-			const comparator = comparable.compareTo(this.array[pivot]);
-			if (comparator === 0) {
-				return pivot;
-			} else if (comparator < 0) {
-				return this.indexOf(comparable, start, pivot);
-			} else {
-				return this.indexOf(comparable, pivot + 1, end);
-			}
+			return this.indexOf(comparable, pivot + 1, end);
 		}
 	}
 
@@ -84,15 +87,6 @@ class Set<T extends Comparable> {
 		return this;
 	}
 
-	/**
-	 * Similar al find que tiene Array pero con busqueda binaria
-	 * @param compareTo
-	 * @returns 
-	 */
-	public find(compareTo: Comparable["compareTo"]): T {
-		return this.array[this.indexOf(<T>{ compareTo: compareTo })];
-	}
-
 	public reduce(callback: (initialValue: any, comparable: T, i: number, set: Set<T>) => any, initialValue: any) {
 		return this.array.reduce((comparable, i, array) => {
 			return callback(initialValue, comparable, i, this);
@@ -107,17 +101,27 @@ class Set<T extends Comparable> {
 		return this.array[index];
 	}
 
-	public map(callback: (comparable: T, i: number, set: Set<T>) => T, thisArg?: any): Set<T> {
-		const set = new Set<T>();
-		set.array = this.array.map((comparable, i, array) => {
-			return callback(comparable, i, this);
-		});
+	public map<U extends Comparable>(callback: (comparable: T, i: number, set: Set<T>) => U): Set<U> {
+		const set = new Set<U>();
+		set.array = this.array.map<U>((comparable, i, array) => callback(comparable, i, this));
 		return set;
 	}
 
-	public slice(begin: number, end: number) {
+	public slice(start: number, end: number) {
 		const set = new Set<T>();
-		set.array = this.array.slice(begin, end);
+		set.array = this.array.slice(start, end);
+		return set;
+	}
+
+	public splice(start: number, deleteCount = 0, ...items: T[]) {
+		const set = new Set<T>();
+		set.array = this.array.splice(start, deleteCount, ...items);
+		return set;
+	}
+
+	public filter(callback: (value: T, index: number, set: Set<T>) => boolean) {
+		const set = new Set<T>();
+		set.array = this.array.filter((comparable, i, array) => callback(comparable, i, this));
 		return set;
 	}
 
@@ -128,7 +132,7 @@ class Set<T extends Comparable> {
 
 	/**
 	 * Devuelve una copia
-	 * @returns 
+	 * @returns
 	 */
 	public toArray(): T[] {
 		return this.array.slice(0); // copy
@@ -139,11 +143,41 @@ class Set<T extends Comparable> {
 	 * @return {number} indice donde fue insertado o -1 si el recibido por parametro es un duplicado el cual ignora
 	 */
 	public add(comparable: T, start = 0, end = this.array.length) {
-		const index = this.indexFor(comparable);
+		const index = this.indexFor(comparable, start, end);
 		if (index > -1) {
 			this.array.splice(index, 0, comparable);
 		}
 		return index;
+	}
+
+	/**
+ 	 * En caso de existir lo reemplaza y en caso de no existir lo adhiere.
+	 * Devuelve el indice en el que se va a encontrar al elemento nuevo.
+	 * @param comparable
+	 * @param start
+	 * @param end
+	 * @param condition Si se cumple la condicion inserta/reemplaza el elemento
+	 * @return {number} indice donde fue insertado/reemplazado, -1 si no fue insertado
+	 */
+	public put(comparable: T, start = 0, end = this.array.length, condition?: (comparable: T, index: number) => boolean): number {
+		const pivot = parseInt((start + (end - start) / 2).toString(), 10);
+		if (end - start <= 0) {
+			this.array.splice(pivot, 0, comparable); // Add
+			return pivot;
+		}
+		const comparator = this.compare(comparable, this.array[pivot]);
+		if (comparator === 0) {
+			if (!condition || condition(this.array[pivot], pivot)) {
+				this.array.splice(pivot, 1, comparable); // Replace
+				return pivot;
+			} else {
+				return -1;
+			}
+		} else if (comparator < 0) {
+			return this.put(comparable, start, pivot, condition);
+		} else {
+			return this.put(comparable, pivot + 1, end, condition);
+		}
 	}
 
 	/**
@@ -172,11 +206,11 @@ class Set<T extends Comparable> {
 			const requestedFirst = comparables[0];
 			const requestedLast = comparables[comparables.length - 1];
 
-			const requestedLastCompareToExistingFirst = requestedLast.compareTo(existingFirst);
+			const requestedLastCompareToExistingFirst = this.compare(requestedLast, existingFirst);
 			if (requestedLastCompareToExistingFirst < 0) { // si estan las dos por debajo de la mas vieja de las coordenadas
 				index = 0; // al principio
 			} else {
-				const requestedFirstCompareToexistingLast = requestedFirst.compareTo(existingLast);
+				const requestedFirstCompareToexistingLast = this.compare(requestedFirst, existingLast);
 				if (requestedFirstCompareToexistingLast > 0) {
 					index = this.array.length; // al final
 				} else {
@@ -251,6 +285,13 @@ class Set<T extends Comparable> {
 		}
 		return index;
 	}
+
+	public reverse() {
+		this.array.reverse();
+		this.reverser = this.reverser * (-1);
+		return this;
+	}
+
 }
 
 export default Set;
