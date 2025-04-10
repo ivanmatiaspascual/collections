@@ -1,4 +1,13 @@
 "use strict";
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * Wrapper de Array.
@@ -17,9 +26,13 @@ var Set = /** @class */ (function () {
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i] = arguments[_i];
         }
+        this.reverser = 1; // 1 o -1
         this.array = [];
         (_a = this.array).push.apply(_a, args);
     }
+    Set.prototype.compare = function (comparable, otherComparable) {
+        return comparable.compareTo(otherComparable) * this.reverser;
+    };
     /**
      * No inserta duplicados.
      * Si detecta que es un duplicado devuelve -1.
@@ -36,17 +49,15 @@ var Set = /** @class */ (function () {
         if (end - start <= 0) {
             return pivot;
         }
+        var comparator = this.compare(comparable, this.array[pivot]);
+        if (comparator === 0) {
+            return -1; // duplicado
+        }
+        else if (comparator < 0) {
+            return this.indexFor(comparable, start, pivot);
+        }
         else {
-            var comparator = comparable.compareTo(this.array[pivot]);
-            if (comparator === 0) {
-                return -1; // duplicado
-            }
-            else if (comparator < 0) {
-                return this.indexFor(comparable, start, pivot);
-            }
-            else {
-                return this.indexFor(comparable, pivot + 1, end);
-            }
+            return this.indexFor(comparable, pivot + 1, end);
         }
     };
     /**
@@ -63,35 +74,33 @@ var Set = /** @class */ (function () {
         if (end === void 0) { end = this.array.length; }
         var pivot = parseInt((start + (end - start) / 2).toString(), 10);
         if (end - start <= 0) {
-            return -1;
+            return -1; // No encontrado
+        }
+        var comparator = this.compare(comparable, this.array[pivot]);
+        if (comparator === 0) {
+            return pivot;
+        }
+        else if (comparator < 0) {
+            return this.indexOf(comparable, start, pivot);
         }
         else {
-            var comparator = comparable.compareTo(this.array[pivot]);
-            if (comparator === 0) {
-                return pivot;
-            }
-            else if (comparator < 0) {
-                return this.indexOf(comparable, start, pivot);
-            }
-            else {
-                return this.indexOf(comparable, pivot + 1, end);
-            }
+            return this.indexOf(comparable, pivot + 1, end);
         }
     };
-    Set.prototype.forEach = function (callback) {
+    Set.prototype.forEach = function (callback, thisArg) {
         var _this = this;
         this.array.forEach(function (comparable, i, array) {
             callback(comparable, i, _this);
         });
         return this;
     };
-    /**
-     * Similar al find que tiene Array pero con busqueda binaria
-     * @param compareTo
-     * @returns
-     */
-    Set.prototype.find = function (compareTo) {
-        return this.array[this.indexOf({ compareTo: compareTo })];
+    Set.prototype.forEachReverse = function (callback, thisArg) {
+        var _this = this;
+        this.array.forEach(function (comparable, i, array) {
+            var j = array.length - i - 1;
+            callback(array[j], j, _this);
+        });
+        return this;
     };
     Set.prototype.reduce = function (callback, initialValue) {
         var _this = this;
@@ -112,14 +121,29 @@ var Set = /** @class */ (function () {
     Set.prototype.map = function (callback) {
         var _this = this;
         var set = new Set();
-        set.array = this.array.map(function (comparable, i, array) {
-            return callback(comparable, i, _this);
-        });
+        set.array = this.array.map(function (comparable, i, array) { return callback(comparable, i, _this); });
         return set;
     };
-    Set.prototype.slice = function (begin, end) {
+    Set.prototype.slice = function (start, end) {
         var set = new Set();
-        set.array = this.array.slice(begin, end);
+        set.array = this.array.slice(start, end);
+        return set;
+    };
+    Set.prototype.splice = function (start, deleteCount) {
+        var _a;
+        if (deleteCount === void 0) { deleteCount = 0; }
+        var items = [];
+        for (var _i = 2; _i < arguments.length; _i++) {
+            items[_i - 2] = arguments[_i];
+        }
+        var set = new Set();
+        set.array = (_a = this.array).splice.apply(_a, __spreadArray([start, deleteCount], items, false));
+        return set;
+    };
+    Set.prototype.filter = function (callback) {
+        var _this = this;
+        var set = new Set();
+        set.array = this.array.filter(function (comparable, i, array) { return callback(comparable, i, _this); });
         return set;
     };
     Set.prototype.clear = function () {
@@ -140,11 +164,45 @@ var Set = /** @class */ (function () {
     Set.prototype.add = function (comparable, start, end) {
         if (start === void 0) { start = 0; }
         if (end === void 0) { end = this.array.length; }
-        var index = this.indexFor(comparable);
+        var index = this.indexFor(comparable, start, end);
         if (index > -1) {
             this.array.splice(index, 0, comparable);
         }
         return index;
+    };
+    /**
+     * En caso de existir lo reemplaza y en caso de no existir lo adhiere.
+     * Devuelve el indice en el que se va a encontrar al elemento nuevo.
+     * @param comparable
+     * @param start
+     * @param end
+     * @param condition Si se cumple la condicion inserta/reemplaza el elemento
+     * @return {number} indice donde fue insertado/reemplazado, -1 si no fue insertado
+     */
+    Set.prototype.put = function (comparable, start, end, condition) {
+        if (start === void 0) { start = 0; }
+        if (end === void 0) { end = this.array.length; }
+        var pivot = parseInt((start + (end - start) / 2).toString(), 10);
+        if (end - start <= 0) {
+            this.array.splice(pivot, 0, comparable); // Add
+            return pivot;
+        }
+        var comparator = this.compare(comparable, this.array[pivot]);
+        if (comparator === 0) {
+            if (!condition || condition(this.array[pivot], pivot)) {
+                this.array.splice(pivot, 1, comparable); // Replace
+                return pivot;
+            }
+            else {
+                return -1;
+            }
+        }
+        else if (comparator < 0) {
+            return this.put(comparable, start, pivot, condition);
+        }
+        else {
+            return this.put(comparable, pivot + 1, end, condition);
+        }
     };
     /**
      * Esto no es un merge, intenta adherir o insertar los elementos
@@ -173,12 +231,12 @@ var Set = /** @class */ (function () {
             var existingLast = this.array[this.array.length - 1];
             var requestedFirst = comparables[0];
             var requestedLast = comparables[comparables.length - 1];
-            var requestedLastCompareToExistingFirst = requestedLast.compareTo(existingFirst);
+            var requestedLastCompareToExistingFirst = this.compare(requestedLast, existingFirst);
             if (requestedLastCompareToExistingFirst < 0) { // si estan las dos por debajo de la mas vieja de las coordenadas
                 index = 0; // al principio
             }
             else {
-                var requestedFirstCompareToexistingLast = requestedFirst.compareTo(existingLast);
+                var requestedFirstCompareToexistingLast = this.compare(requestedFirst, existingLast);
                 if (requestedFirstCompareToexistingLast > 0) {
                     index = this.array.length; // al final
                 }
@@ -243,16 +301,28 @@ var Set = /** @class */ (function () {
         throw new TypeError("Not implemented.");
     };
     /**
-     * @param {T} comparable
+     * @param {T | Comparable["compareTo"]} param Objeto o una funcion compareTo
      * @return {number} indice donde se encontraba insertado o -1 si no pudo removerlo porque no se encontraba insertado
      */
-    Set.prototype.remove = function (comparable) {
-        var index = this.indexOf(comparable);
+    Set.prototype.remove = function (param) {
+        var index;
+        if (typeof param === "object") {
+            index = this.indexOf(param);
+        }
+        else { // "function"
+            index = this.indexOf({ compareTo: param });
+        }
         if (index > -1) {
             this.array.splice(index, 1);
         }
         return index;
     };
+    Set.prototype.reverse = function () {
+        this.array.reverse();
+        this.reverser = this.reverser * (-1);
+        return this;
+    };
     return Set;
 }());
 exports.default = Set;
+//# sourceMappingURL=Set.js.map
