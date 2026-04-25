@@ -156,14 +156,18 @@ class Set<T extends Comparable> {
 	 * @param comparable
 	 * @param start
 	 * @param end
-	 * @param condition Si se cumple la condicion inserta/reemplaza el elemento
+	 * @param condition Si se cumple la condicion inserta o reemplaza el elemento
 	 * @return {number} indice donde fue insertado/reemplazado, -1 si no fue insertado
 	 */
-	public put(comparable: T, start = 0, end = this.array.length, condition?: (comparable: T, index: number) => boolean): number {
+	public put(comparable: T, start = 0, end = this.array.length, condition?: (comparable: T | undefined, index: number) => boolean): number {
 		const pivot = parseInt((start + (end - start) / 2).toString(), 10);
 		if (end - start <= 0) {
-			this.array.splice(pivot, 0, comparable); // Add
-			return pivot;
+			if (!condition || condition(undefined, pivot)) {
+				this.array.splice(pivot, 0, comparable); // Add
+				return pivot;
+			} else {
+				return -1;
+			}
 		}
 		const comparator = this.compare(comparable, this.array[pivot]);
 		if (comparator === 0) {
