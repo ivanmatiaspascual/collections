@@ -10,12 +10,12 @@ import Comparable from "./interfaces/Comparable";
 class Set<T extends Comparable> {
 
 	private reverser = 1; // 1 o -1
-	private array: any[];
+	private array: T[];
 
 	/**
 	 * @param {...helper.collection.Comparable} args Los mismos argumentos que soporta la clase built-in nativa Array
 	 */
-	constructor(...args: any[]) {
+	constructor(...args: T[]) {
 		this.array = [];
 		this.array.push(...args);
 	}
@@ -87,9 +87,9 @@ class Set<T extends Comparable> {
 		return this;
 	}
 
-	public reduce(callback: (initialValue: any, comparable: T, i: number, set: Set<T>) => any, initialValue: any) {
-		return this.array.reduce((comparable, i, array) => {
-			return callback(initialValue, comparable, i, this);
+	public reduce<U>(callback: (initialValue: U, comparable: T, index: number, set: Set<T>) => U, initialValue: U) {
+		return this.array.reduce<U>((initialValue, comparable, index, array) => {
+			return callback(initialValue, comparable, index, this);
 		}, initialValue);
 	}
 
