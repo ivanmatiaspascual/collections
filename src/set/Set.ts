@@ -296,6 +296,20 @@ class Set<T extends Comparable> {
 		return this;
 	}
 
+	public first() {
+		if (this.array.length < 1) {
+			throw new Error("Empty set");
+		}
+		return this.array[0];
+	}
+
+	public last() {
+		if (this.array.length < 1) {
+			throw new Error("Empty set");
+		}
+		return this.array[this.array.length - 1];
+	}
+
 }
 
 export default Set;
