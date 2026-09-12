@@ -1,4 +1,5 @@
-import Comparable from "./interfaces/Comparable";
+import { Set as Interface } from "./set.interface";
+import { Comparable } from "./comparable.interface";
 
 /**
  * Wrapper de Array.
@@ -7,7 +8,7 @@ import Comparable from "./interfaces/Comparable";
  * Por defecto adhiere elementos de forma ascendente y se trata a los elementos como si fueran numericos.
  * @memberof helper.collection
  */
-class Set<T extends Comparable> {
+export class Set<T extends Comparable> implements Interface<T> {
 
 	private reverser = 1; // 1 o -1
 	private array: T[];
@@ -15,7 +16,7 @@ class Set<T extends Comparable> {
 	/**
 	 * @param {...helper.collection.Comparable} args Los mismos argumentos que soporta la clase built-in nativa Array
 	 */
-	constructor(...args: T[]) {
+	public constructor(...args: T[]) {
 		this.array = [];
 		this.array.push(...args);
 	}
@@ -113,10 +114,8 @@ class Set<T extends Comparable> {
 		return set;
 	}
 
-	public splice(start: number, deleteCount = 0, ...items: T[]) {
-		const set = new Set<T>();
-		set.array = this.array.splice(start, deleteCount, ...items);
-		return set;
+	public splice(start: number, deleteCount = this.length - start) {
+		return this.remove(start, deleteCount);
 	}
 
 	public filter(callback: (value: T, index: number, set: Set<T>) => boolean) {
@@ -142,16 +141,20 @@ class Set<T extends Comparable> {
 	 * Devuelve el indice en el que se va a encontrar al elemento nuevo.
 	 * @return {number} indice donde fue insertado o -1 si el recibido por parametro es un duplicado el cual ignora
 	 */
-	public add(comparable: T, start = 0, end = this.array.length) {
-		const index = this.indexFor(comparable, start, end);
+	public add(comparable: T, start = 0, end = this.array.length, before?: (index: number) => boolean) {
+		let index = this.indexFor(comparable, start, end);
 		if (index > -1) {
-			this.array.splice(index, 0, comparable);
+			if (before && !before(index)) {
+				index = -1;
+			} else {
+				this.array.splice(index, 0, comparable);
+			}
 		}
 		return index;
 	}
 
 	/**
- 	 * En caso de existir lo reemplaza y en caso de no existir lo adhiere.
+	   * En caso de existir lo reemplaza y en caso de no existir lo adhiere.
 	 * Devuelve el indice en el que se va a encontrar al elemento nuevo.
 	 * @param comparable
 	 * @param start
@@ -277,17 +280,32 @@ class Set<T extends Comparable> {
 	 * @param {T | Comparable["compareTo"]} param Objeto o una funcion compareTo
 	 * @return {number} indice donde se encontraba insertado o -1 si no pudo removerlo porque no se encontraba insertado
 	 */
-	public remove(param: T | Comparable["compareTo"]) {
-		let index;
+	public remove(comparable: T): Set<T>;
+	public remove(comparable: Comparable["compareTo"]): Set<T>;
+	public remove(start: number, deleteCount?: number): Set<T>;
+	public remove(param: T | Comparable["compareTo"] | number, count = NaN) {
+		let removed: Set<T> = new Set();
+		let index: number;
 		if (typeof param === "object") {
 			index = this.indexOf(param);
+			if (!Number.isInteger(count)) {
+				count = 1;
+			}
+		} else if (typeof param === "number") {
+			index = param;
+			if (!Number.isInteger(count)) {
+				count = this.length - index;
+			}
 		} else { // "function"
 			index = this.indexOf(<T>{ compareTo: param });
+			if (!Number.isInteger(count)) {
+				count = 1;
+			}
 		}
 		if (index > -1) {
-			this.array.splice(index, 1);
+			removed = new Set<T>(...this.array.splice(index, count));
 		}
-		return index;
+		return removed;
 	}
 
 	public reverse() {
@@ -311,5 +329,3 @@ class Set<T extends Comparable> {
 	}
 
 }
-
-export default Set;

@@ -1,4 +1,11 @@
-import Comparable from "./set/interfaces/Comparable";
-import Set from "./set/Set";
+import { Comparable } from "./set/comparable.interface";
+import { Set } from "./set/set.interface";
+import { simple } from "./set";
+import { least_recently_used } from "./lru";
 
-export { Set, Comparable };
+export {
+	Comparable,
+	Set,
+	simple,
+	least_recently_used
+};

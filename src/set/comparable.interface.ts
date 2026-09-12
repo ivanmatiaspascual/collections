@@ -1,5 +1,5 @@
 
-interface Comparable {
+export interface Comparable {
 
 	/**
 	 * Compares this object with the specified object for order.
@@ -9,7 +9,5 @@ interface Comparable {
 	 * @return {number}
 	 */
 	compareTo(other: Comparable): number;
-	
-}
 
-export default Comparable;
+}
