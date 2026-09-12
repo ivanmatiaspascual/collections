@@ -8,7 +8,7 @@ import { Node } from "./node";
  */
 export class Set<T extends Comparable> implements Interface<T> {
 	private set: _Set<Node<T>> = new _Set();
-	private capacity: number;
+	public readonly capacity: number;
 	private head?: Node<T>;
 	private tail?: Node<T>;
 
@@ -127,14 +127,16 @@ export class Set<T extends Comparable> implements Interface<T> {
 		throw new Error("Method not implemented.");
 	}
 
-	public add(comparable: T, start = 0, end?: number) {
+	public add(comparable: T, start = 0, end?: number, onEvict?: (node: Node<T>) => void) {
 		const node: Node<T> = new Node(comparable);
 		const index = this.set.add(node, start, end);
 		if (index > -1) {
 			if (this.length >= this.capacity && this.tail) {
 				// Evict least recently used (tail) before inserting
-				this.set.remove(this.tail);
-				this._remove(this.tail);
+				const evicted = this.tail;
+				this.set.remove(evicted);
+				this._remove(evicted);
+				if (onEvict) onEvict(evicted);
 			}
 			this._add(node);
 		}
@@ -145,7 +147,7 @@ export class Set<T extends Comparable> implements Interface<T> {
 		throw new Error("Method not implemented.");
 	}
 
-	public put(comparable: T, start = 0, end?: number, condition?: (comparable: T | undefined, index: number) => boolean): number {
+	public put(comparable: T, start = 0, end?: number, condition?: (comparable: T | undefined, index: number) => boolean, onEvict?: (node: Node<T>) => void): number {
 		const newNode = new Node<T>(comparable);
 		// Capture old node before put() replaces it in the inner set
 		const existingIndex = this.set.indexOf(<Node<T>>{ compareTo: other => comparable.compareTo(other) });
@@ -160,8 +162,10 @@ export class Set<T extends Comparable> implements Interface<T> {
 				this._remove(oldNode);
 			} else if (this.length > this.capacity && this.tail) {
 				// Insert: evict least recently used (tail)
-				this.set.remove(this.tail);
-				this._remove(this.tail);
+				const evicted = this.tail;
+				this.set.remove(evicted);
+				this._remove(evicted);
+				if (onEvict) onEvict(evicted);
 			}
 			this._add(newNode);
 		}
