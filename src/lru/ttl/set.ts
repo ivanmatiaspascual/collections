@@ -77,11 +77,11 @@ export class Set<T extends Comparable> implements Interface<T> {
 	}
 
 	public indexFor(comparable: T, start?: number, end?: number): number {
-		return this.set.indexFor(<Node<T>>{ compareTo: other => comparable.compareTo(other) }, start, end);
+		return this.set.indexFor(<Node<T>>{ compareTo: other => comparable.compareTo(other.comparable) }, start, end);
 	}
 
 	public indexOf(comparable: T, start?: number, end?: number): number {
-		return this.set.indexOf(<Node<T>>{ compareTo: other => comparable.compareTo(other) }, start, end);
+		return this.set.indexOf(<Node<T>>{ compareTo: other => comparable.compareTo(other.comparable) }, start, end);
 	}
 
 	public forEach(callback: (comparable: T, i: number, set: Interface<T>) => void, thisArg?: any): Interface<T> {
@@ -172,11 +172,11 @@ export class Set<T extends Comparable> implements Interface<T> {
 	public remove(param: T | Comparable["compareTo"] | number, count = NaN): Interface<T> {
 		let removedLRU: Interface<Node<T>>;
 		if (typeof param === "object") {
-			removedLRU = this.set.remove(<Node<T>>{ compareTo: other => param.compareTo(other) });
+			removedLRU = this.set.remove(<Node<T>>{ compareTo: other => param.compareTo(other.comparable) });
 		} else if (typeof param === "number") {
 			removedLRU = this.set.remove(param, count);
 		} else { // "function"
-			removedLRU = this.set.remove(<Node<T>>{ compareTo: param });
+			removedLRU = this.set.remove(<Node<T>>{ compareTo: other => param(other.comparable) });
 		}
 
 		const removed = new Set<T>(this.set.capacity, this.ttl);

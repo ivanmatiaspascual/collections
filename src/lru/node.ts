@@ -12,8 +12,8 @@ export class Node<T extends Comparable> implements Comparable {
 		this.next = next;
 	}
 
-	public compareTo(other: T) {
-		return this.comparable.compareTo(other);
+	public compareTo(other: Node<T>) {
+		return this.comparable.compareTo(other.comparable);
 	}
 
 }

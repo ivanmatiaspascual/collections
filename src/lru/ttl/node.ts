@@ -11,9 +11,8 @@ export class Node<T extends Comparable> extends Super<T> {
 		this.expires = Date.now() + ttl;
 	}
 
-	public compareTo(other: Comparable): number {
-		const otherComparable = other instanceof Node ? other.comparable : other;
-		return this.comparable.compareTo(otherComparable);
+	public compareTo(other: Node<T>): number {
+		return this.comparable.compareTo(other.comparable);
 	}
 
 }

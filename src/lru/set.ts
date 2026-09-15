@@ -62,11 +62,11 @@ export class Set<T extends Comparable> implements Interface<T> {
 	}
 
 	public indexFor(comparable: T, start?: number, end?: number): number {
-		return this.set.indexFor(<Node<T>>{ compareTo: other => comparable.compareTo(other) });
+		return this.set.indexFor(<Node<T>>{ compareTo: other => comparable.compareTo(other.comparable) });
 	}
 
 	public indexOf(comparable: T, start?: number, end?: number): number {
-		return this.set.indexOf(<Node<T>>{ compareTo: other => comparable.compareTo(other) });
+		return this.set.indexOf(<Node<T>>{ compareTo: other => comparable.compareTo(other.comparable) });
 	}
 
 	public forEach(callback: (comparable: T, i: number, set: Set<T>) => void, thisArg?: any): Set<T> {
@@ -131,7 +131,7 @@ export class Set<T extends Comparable> implements Interface<T> {
 		const node: Node<T> = new Node(comparable);
 		const index = this.set.add(node, start, end);
 		if (index > -1) {
-			if (this.length >= this.capacity && this.tail) {
+			if (this.length > this.capacity && this.tail) {
 				// Evict least recently used (tail) before inserting
 				const evicted = this.tail;
 				this.set.remove(evicted);
@@ -180,11 +180,11 @@ export class Set<T extends Comparable> implements Interface<T> {
 	public remove(param: T | Comparable["compareTo"] | number, count = NaN): Set<T> {
 		let _set: _Set<Node<T>>;
 		if (typeof param === "object") {
-			_set = this.set.remove(<Node<T>>{ compareTo: other => param.compareTo(other) });
+			_set = this.set.remove(<Node<T>>{ compareTo: other => param.compareTo(other.comparable) });
 		} else if (typeof param === "number") {
 			_set = this.set.remove(param, count);
 		} else { // "function"
-			_set = this.set.remove(<Node<T>>{ compareTo: param });
+			_set = this.set.remove(<Node<T>>{ compareTo: other => param(other.comparable) });
 		}
 		let removed: Set<T> = new Set(this.capacity);
 		this._forEach(current => {
