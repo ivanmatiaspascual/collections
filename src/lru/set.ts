@@ -127,7 +127,7 @@ export class Set<T extends Comparable> implements Interface<T> {
 		throw new Error("Method not implemented.");
 	}
 
-	public add(comparable: T, start = 0, end?: number, onEvict?: (node: Node<T>) => void) {
+	public add(comparable: T, start = 0, end?: number, onEvict?: (node: T) => void) {
 		const node: Node<T> = new Node(comparable);
 		const index = this.set.add(node, start, end);
 		if (index > -1) {
@@ -136,7 +136,7 @@ export class Set<T extends Comparable> implements Interface<T> {
 				const evicted = this.tail;
 				this.set.remove(evicted);
 				this._remove(evicted);
-				if (onEvict) onEvict(evicted);
+				if (onEvict) onEvict(evicted.comparable);
 			}
 			this._add(node);
 		}
@@ -147,27 +147,25 @@ export class Set<T extends Comparable> implements Interface<T> {
 		throw new Error("Method not implemented.");
 	}
 
-	public put(comparable: T, start = 0, end?: number, condition?: (comparable: T | undefined, index: number) => boolean, onEvict?: (node: Node<T>) => void): number {
-		const newNode = new Node<T>(comparable);
-		// Capture old node before put() replaces it in the inner set
-		const existingIndex = this.set.indexOf(<Node<T>>{ compareTo: other => comparable.compareTo(other) });
-		const oldNode = existingIndex > -1 ? this.set.get(existingIndex) : undefined;
-		const wrappedCondition = condition
-			? (n: Node<T> | undefined, i: number) => condition(n?.comparable, i)
-			: undefined;
-		const index = this.set.put(newNode, start, end, wrappedCondition);
+	public put(comparable: T, start = 0, end?: number, condition?: (comparable: T | undefined, index: number) => boolean, onEvict?: (node: T) => void): number {
+		const node = new Node<T>(comparable);
+		let previous: Node<T> | undefined;
+		const index = this.set.put(node, start, end, (current, index) => {
+			previous = current;
+			return !condition || condition(current?.comparable, index);
+		});
 		if (index > -1) {
-			if (oldNode) {
+			if (previous) {
 				// Replace: swap old node out of LL, promote new node to head
-				this._remove(oldNode);
+				this._remove(previous);
 			} else if (this.length > this.capacity && this.tail) {
 				// Insert: evict least recently used (tail)
 				const evicted = this.tail;
 				this.set.remove(evicted);
 				this._remove(evicted);
-				if (onEvict) onEvict(evicted);
+				if (onEvict) onEvict(evicted.comparable);
 			}
-			this._add(newNode);
+			this._add(node);
 		}
 		return index;
 	}

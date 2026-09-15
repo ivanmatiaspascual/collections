@@ -1,83 +1,75 @@
 import { Comparable } from "../../set/comparable.interface";
 import { Set as Interface } from "../../set/set.interface";
-import { Set as Super } from "../set";
+import { Set as _Set } from "../set";
 import { Node } from "./node";
 
 export class Set<T extends Comparable> implements Interface<T> {
 
-	private set: Super<Node<T>>; // LRU capacity eviction
+	private set: _Set<Node<T>>; // LRU capacity eviction
 	private ttl: number; // ms
-	private expiryHead?: Node<T>; // oldest = evict first
-	private expiryTail?: Node<T>;
+	private head?: Node<T>; // oldest = evict first
+	private tail?: Node<T>;
 	private timeoutId?: ReturnType<typeof setTimeout>;
 
 	public constructor(capacity: number, ttl: number, ...args: T[]) {
-		this.set = new Super<Node<T>>(capacity);
+		this.set = new _Set<Node<T>>(capacity);
 		this.ttl = ttl;
 		for (const comparable of args) {
 			this.add(comparable);
 		}
 	}
 
-	private handleEvict = (evictedNode: any) => {
-		// evictedNode is LRU.Node<TTL.Node<T>>.
-		// Its .comparable property is the actual TTL.Node<T>.
-		if (evictedNode && evictedNode.comparable) {
-			this._removeFromExpiryList(evictedNode.comparable);
-		}
-	};
-
-	private _removeFromExpiryList(node: Node<T>) {
-		if (node.expiryPrevious) {
-			node.expiryPrevious.expiryNext = node.expiryNext;
+	private _remove(node: Node<T>) {
+		if (node.previous) {
+			node.previous.next = node.next;
 		} else {
-			this.expiryHead = node.expiryNext;
+			this.head = node.next;
 		}
-		if (node.expiryNext) {
-			node.expiryNext.expiryPrevious = node.expiryPrevious;
+		if (node.next) {
+			node.next.previous = node.previous;
 		} else {
-			this.expiryTail = node.expiryPrevious;
+			this.tail = node.previous;
 		}
-		node.expiryPrevious = undefined;
-		node.expiryNext = undefined;
+		node.previous = undefined;
+		node.next = undefined;
 		return this;
 	}
 
-	private _addToExpiryList(node: Node<T>) {
-		if (!this.expiryHead) {
-			this.expiryHead = node;
-			this.expiryTail = node;
-		} else {
-			// Add to tail (newest)
-			node.expiryPrevious = this.expiryTail;
-			this.expiryTail!.expiryNext = node;
-			this.expiryTail = node;
+	private expired() {
+		const now = Date.now();
+		while (this.head && this.head.expires <= now) {
+			const expired = this.head;
+			this._remove(expired);
+			this.set.remove(expired);
 		}
-		if (!this.timeoutId) {
-			this.scheduleEviction();
-		}
-		return this;
+		this.schedule();
 	}
 
-	private scheduleEviction() {
+	private schedule() {
 		if (this.timeoutId) {
 			clearTimeout(this.timeoutId);
 			this.timeoutId = undefined;
 		}
-		if (this.expiryHead) {
-			const delay = Math.max(0, this.expiryHead.expiresAt - Date.now());
-			this.timeoutId = setTimeout(() => this.evictExpired(), delay);
+		if (this.head) {
+			const delay = Math.max(0, this.head.expires - Date.now());
+			this.timeoutId = setTimeout(() => this.expired(), delay);
 		}
 	}
 
-	private evictExpired() {
-		const now = Date.now();
-		while (this.expiryHead && this.expiryHead.expiresAt <= now) {
-			const expired = this.expiryHead;
-			this._removeFromExpiryList(expired);
-			this.set.remove(expired);
+	private _add(node: Node<T>) {
+		if (!this.head) {
+			this.head = node;
+			this.tail = node;
+		} else {
+			// Add to tail (newest)
+			node.previous = this.tail;
+			this.tail!.next = node;
+			this.tail = node;
 		}
-		this.scheduleEviction();
+		if (!this.timeoutId) {
+			this.schedule();
+		}
+		return this;
 	}
 
 	public get length(): number {
@@ -143,9 +135,9 @@ export class Set<T extends Comparable> implements Interface<T> {
 
 	public add(comparable: T, start = 0, end?: number): number {
 		const node = new Node<T>(comparable, this.ttl);
-		const index = this.set.add(node, start, end, this.handleEvict);
+		const index = this.set.add(node, start, end, this._remove);
 		if (index > -1) {
-			this._addToExpiryList(node);
+			this._add(node);
 		}
 		return index;
 	}
@@ -155,20 +147,17 @@ export class Set<T extends Comparable> implements Interface<T> {
 	}
 
 	public put(comparable: T, start = 0, end?: number, condition?: ((comparable: T | undefined, index: number) => boolean) | undefined): number {
-		const newNode = new Node<T>(comparable, this.ttl);
-		const existingIndex = this.set.indexOf(<Node<T>>{ compareTo: other => comparable.compareTo(other) });
-		const oldNode = existingIndex > -1 ? this.set.get(existingIndex) : undefined;
-
-		const wrappedCondition = condition
-			? (n: Node<T> | undefined, i: number) => condition(n?.comparable, i)
-			: undefined;
-
-		const index = this.set.put(newNode, start, end, wrappedCondition, this.handleEvict);
+		const node = new Node<T>(comparable, this.ttl);
+		let previous: Node<T> | undefined;
+		const index = this.set.put(node, start, end, (current, index) => {
+			previous = current;
+			return !condition || condition(current?.comparable, index);
+		}, this._remove);
 		if (index > -1) {
-			if (oldNode) {
-				this._removeFromExpiryList(oldNode);
+			if (previous) {
+				this._remove(previous);
 			}
-			this._addToExpiryList(newNode);
+			this._add(node);
 		}
 		return index;
 	}
@@ -192,9 +181,9 @@ export class Set<T extends Comparable> implements Interface<T> {
 
 		const removed = new Set<T>(this.set.capacity, this.ttl);
 		removedLRU.forEach((node) => {
-			this._removeFromExpiryList(node);
+			this._remove(node);
 			removed.set.add(node);
-			removed._addToExpiryList(node);
+			removed._add(node);
 		});
 		return removed;
 	}
@@ -216,8 +205,8 @@ export class Set<T extends Comparable> implements Interface<T> {
 			clearTimeout(this.timeoutId);
 			this.timeoutId = undefined;
 		}
-		this.expiryHead = undefined;
-		this.expiryTail = undefined;
+		this.head = undefined;
+		this.tail = undefined;
 	}
 
 }
