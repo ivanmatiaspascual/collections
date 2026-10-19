@@ -135,7 +135,7 @@ export class Set<T extends Comparable> implements Interface<T> {
 
 	public add(comparable: T, start = 0, end?: number): number {
 		const node = new Node<T>(comparable, this.ttl);
-		const index = this.set.add(node, start, end, this._remove);
+		const index = this.set.add(node, start, end, (n) => this._remove(n));
 		if (index > -1) {
 			this._add(node);
 		}
@@ -152,7 +152,7 @@ export class Set<T extends Comparable> implements Interface<T> {
 		const index = this.set.put(node, start, end, (current, index) => {
 			previous = current;
 			return !condition || condition(current?.comparable, index);
-		}, this._remove);
+		}, (n) => this._remove(n));
 		if (index > -1) {
 			if (previous) {
 				this._remove(previous);
