@@ -34,8 +34,8 @@ describe('LRU TTL Set', () => {
 		const b = new NumberComparable(2);
 		const lru = new Set<NumberComparable>(3, 1000, a, b);
 		expect(lru.length).toBe(2);
-		expect(lru.indexOf(a)).toBeGreaterThan(-1);
-		expect(lru.indexOf(b)).toBeGreaterThan(-1);
+		expect(lru.indexOf(a)).toBe(0); // set is [1,2], a=1 is at index 0
+		expect(lru.indexOf(b)).toBe(1); // set is [1,2], b=2 is at index 1
 	});
 
 	it('should add items and respect capacity (LRU eviction)', () => {
@@ -54,7 +54,7 @@ describe('LRU TTL Set', () => {
 		// n1 was LRU (oldest in TTL list = head), should be evicted
 		expect(lru.length).toBe(3);
 		expect(lru.indexOf(n1)).toBe(-1);
-		expect(lru.indexOf(n4)).toBeGreaterThan(-1);
+		expect(lru.indexOf(n4)).toBe(2); // set is [2,3,4] after eviction of n1
 
 		lru.destroy();
 	});
@@ -84,7 +84,7 @@ describe('LRU TTL Set', () => {
 		jest.advanceTimersByTime(500);
 
 		expect(lru.length).toBe(1);
-		expect(lru.indexOf(n1)).toBeGreaterThan(-1);
+		expect(lru.indexOf(n1)).toBe(0); // only element [1], at index 0
 
 		lru.destroy();
 	});
@@ -101,7 +101,7 @@ describe('LRU TTL Set', () => {
 		expect(lru.length).toBe(1);
 		expect(lru.indexOf(n1)).toBe(-1);
 		expect(removed.length).toBe(1);
-		expect(removed.indexOf(n1)).toBeGreaterThan(-1);
+		expect(removed.indexOf(n1)).toBe(0); // only element in the removed set
 
 		lru.destroy();
 	});
@@ -152,7 +152,7 @@ describe('LRU TTL Set', () => {
 
 		lru.add(n3); // new item, fresh TTL
 		expect(lru.length).toBe(1);
-		expect(lru.indexOf(n3)).toBeGreaterThan(-1);
+		expect(lru.indexOf(n3)).toBe(0); // only element [3], at index 0
 
 		lru.destroy();
 	});

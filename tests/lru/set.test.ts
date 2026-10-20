@@ -41,7 +41,7 @@ describe('LRU Set', () => {
 		expect(evicted).toBe(node1);
 		expect(lru.length).toBe(3);
 		expect(lru.indexOf(node1)).toBe(-1);
-		expect(lru.indexOf(node4)).toBeGreaterThan(-1);
+		expect(lru.indexOf(node4)).toBe(2); // set is [2,3,4] after eviction of 1
 	});
 
 	it('should promote an item to MRU on get', () => {
@@ -64,7 +64,7 @@ describe('LRU Set', () => {
 		lru.add(node4);
 
 		expect(lru.indexOf(node2)).toBe(-1);
-		expect(lru.indexOf(node1)).toBeGreaterThan(-1); // protected from eviction
+		expect(lru.indexOf(node1)).toBe(0); // set is [1,3,4] after eviction of 2
 	});
 
 	it('should support replace with put', () => {
@@ -96,7 +96,7 @@ describe('LRU Set', () => {
 
 		expect(lru.length).toBe(0);
 		expect(removed.length).toBe(1);
-		expect(removed.indexOf(node1)).toBeGreaterThan(-1);
+		expect(removed.indexOf(node1)).toBe(0); // only element in the removed set
 	});
 
 	it('should iterate over items in order', () => {
