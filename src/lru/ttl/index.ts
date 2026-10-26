@@ -1,5 +1,8 @@
-import { Set } from "./set";
+import { Set as _Set } from "./set";
+import { Comparable } from "../../set/comparable.interface";
 
-export namespace time_to_live {
-	Set
+export namespace TimeToLive {
+	// Implementacion
+	export const Set = _Set;
+	export type Set<T extends Comparable> = _Set<T>;
 }
