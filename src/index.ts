@@ -1,4 +1,13 @@
-import Comparable from "./set/interfaces/Comparable";
-import Set from "./set/Set";
+import type { Comparable } from "./set/comparable.interface";
+import type { Set } from "./set/set.interface";
+import { Simple } from "./set";
+import { LeastRecentlyUsed } from "./lru";
 
-export { Set, Comparable };
+export {
+	// Interfaces
+	Comparable, // type
+	Set, // type
+	// Implementacion
+	Simple, // namespace
+	LeastRecentlyUsed // namepace
+};
