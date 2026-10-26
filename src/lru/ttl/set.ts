@@ -56,6 +56,11 @@ export class Set<T extends Comparable> implements Interface<T> {
 		}
 	}
 
+	/**
+	 * Queue strategy
+	 * @param node 
+	 * @returns 
+	 */
 	private _add(node: Node<T>) {
 		if (!this.head) {
 			this.head = node;
@@ -106,7 +111,15 @@ export class Set<T extends Comparable> implements Interface<T> {
 
 	public get(index: number): T | undefined {
 		const node = this.set.get(index);
-		return node ? node.comparable : undefined;
+		if (node) {
+			// Reset TTL: unlink from current position, refresh expiry, re-append to tail
+			this._remove(node);
+			node.expires = Date.now() + this.ttl;
+			this._add(node);
+			this.schedule(); // Por si acaso estuvierta accediendo al primero de la cola entonces el contador tiene que empezar de nuevo pero con el tiempo que le falte al siguiente de la cola
+			return node.comparable;
+		}
+		return undefined;
 	}
 
 	public map<U extends Comparable>(callback: (comparable: T, i: number, set: Interface<T>) => U): Interface<U> {
